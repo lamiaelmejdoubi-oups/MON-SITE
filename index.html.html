@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Fiches Pédagogiques FLE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* --- STYLE DE L'APPLICATION --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        
+        .upload-area { text-align: center; padding: 20px; border: 2px dashed #bdc3c7; border-radius: 10px; background-color: #f9fbfc; margin-bottom: 20px; }
+        #imagePreview { max-width: 100%; max-height: 300px; margin-top: 15px; border-radius: 8px; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        .btn { background-color: #3498db; color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; margin: 5px;}
+        .btn:hover { background-color: #2980b9; }
+        .btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        .btn-pdf { background-color: #27ae60; }
+        .btn-pdf:hover { background-color: #2ecc71; }
+
+        #loading { display: none; text-align: center; color: #e67e22; font-weight: bold; font-size: 18px; margin: 20px 0; }
+        
+        /* Zone d'affichage des résultats dans l'application */
+        #appResults { display: none; margin-top: 30px; }
+        .section-title { background-color: #ecf0f1; padding: 10px; border-left: 5px solid #3498db; margin-top: 20px; border-radius: 0 5px 5px 0; }
+        
+        /* Zone invisible destinée uniquement à la création du PDF */
+        #pdf-container { display: none; }
+        
+        /* Styles appliqués lors de l'export PDF */
+        .pdf-page { padding: 40px; background: white; font-size: 14px; color: black; }
+        .page-break { page-break-before: always; }
+        .pdf-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px; }
+        .pdf-image { text-align: center; margin-bottom: 20px; }
+        .pdf-image img { max-width: 80%; max-height: 300px; border: 1px solid #ccc; }
+        .exercice-box { border: 1px solid #bdc3c7; padding: 15px; margin-bottom: 15px; border-radius: 5px; background-color: #fafafa; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #bdc3c7; padding: 8px; text-align: left; }
+        th { background-color: #ecf0f1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎓 Générateur Pédagogique Intelligent</h1>
+    
+    <div class="upload-area">
+        <h3>1. Importez une image (jpg, png, jpeg)</h3>
+        <input type="file" id="imageInput" accept=".jpg, .jpeg, .png">
+        <br>
+        <img id="imagePreview" alt="Aperçu">
+        <br><br>
+        <button id="generateBtn" class="btn" disabled>✨ Générer la séquence pédagogique</button>
+    </div>
+
+    <div id="loading">⏳ L'IA analyse l'image et crée les exercices. Cela peut prendre 20 à 30 secondes...</div>
+
+    <div id="appResults">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button id="downloadPdfBtn" class="btn btn-pdf">📥 Télécharger la Fiche PDF (Élève + Professeur)</button>
+        </div>
+        <p style="text-align: center; color: #7f8c8d;"><i>Aperçu généré avec succès ! Cliquez sur le bouton ci-dessus pour obtenir le document formaté.</i></p>
+    </div>
+</div>
+
+<div id="pdf-container">
+    
+    <div id="pdf-student-page" class="pdf-page">
+        <div class="pdf-header">
+            <h2>Fiche d'Activité : Français</h2>
+            <p>Nom : _____________________ &nbsp;&nbsp;&nbsp;&nbsp; Date : ______________</p>
+        </div>
+        
+        <div class="pdf-image">
+            <img id="pdfImagePreview" alt="Support visuel">
+        </div>
+
+        <h3>1. Observation et Compréhension</h3>
+        <div class="exercice-box" id="pdf-observation"></div>
+
+        <h3>2. Vocabulaire</h3>
+        <table id="pdf-vocab"></table>
+
+        <h3>3. Grammaire & Conjugaison</h3>
+        <div class="exercice-box" id="pdf-grammaire"></div>
+        <div class="exercice-box" id="pdf-conjugaison"></div>
+
+        <h3>4. QCM de compréhension</h3>
+        <div class="exercice-box" id="pdf-qcm"></div>
+
+        <h3>5. Texte à trous</h3>
+        <div class="exercice-box" id="pdf-trous"></div>
+
+        <h3>6. Expression Écrite</h3>
+        <div class="exercice-box" id="pdf-ecrite"></div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div id="pdf-teacher-page" class="pdf-page">
+        <div class="pdf-header">
+            <h2>Fiche Enseignant : Corrigés et Activités</h2>
+            <p>Analyse de l'image et réponses attendues</p>
+        </div>
+
+        <h3>Analyse globale de l'image (IA)</h3>
+        <div class="exercice-box" id="pdf-analyse-ia"></div>
+
+        <h3>Corrigé : Grammaire & Conjugaison</h3>
+        <div class="exercice-box" id="pdf-corr-grammaire"></div>
+
+        <h3>Corrigé : QCM & Texte à trous</h3>
+        <div class="exercice-box" id="pdf-corr-qcm-trous"></div>
+
+        <h3>Texte de la Dictée Pédagogique</h3>
+        <div class="exercice-box" id="pdf-dictee" style="font-style: italic; background-color: #e8f6f3;"></div>
+
+        <h3>Pistes pour l'Expression Orale</h3>
+        <div class="exercice-box" id="pdf-orale"></div>
+    </div>
+</div>
+
+<script>
+    /* --- LOGIQUE DE L'APPLICATION --- */
+    
+    // ⚠️ REMPLACE CECI PAR TA CLÉ API
+    const API_KEY = "AIzaSyB7nFlMPa6YUpqWDkGwjgk9YU-iiTxRZEE";
+
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const pdfImagePreview = document.getElementById('pdfImagePreview');
+    const generateBtn = document.getElementById('generateBtn');
+    const loading = document.getElementById('loading');
+    const appResults = document.getElementById('appResults');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
+    let base64Image = "";
+    let mimeType = "";
+
+    // 1. Gestion de l'image
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            mimeType = file.type;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const result = event.target.result;
+                imagePreview.src = result;
+                imagePreview.style.display = 'inline-block';
+                pdfImagePreview.src = result; // Copie l'image pour le PDF
+                base64Image = result.split(',')[1];
+                generateBtn.disabled = false;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 2. Le "Prompt" (Les instructions strictes pour l'IA)
+    const jsonPrompt = `
+    Agis comme un expert en ingénierie pédagogique (FLE). Analyse l'image fournie et génère une séquence pédagogique complète.
+    TU DOIS IMPÉRATIVEMENT RÉPONDRE UNIQUEMENT EN FORMAT JSON VALIDE. Ne mets aucun texte en dehors du JSON.
+    Voici la structure exacte attendue :
+    {
+        "analyse": { "personnes": "...", "objets": "...", "actions": "...", "lieu": "...", "ambiance": "..." },
+        "observation": ["question 1", "question 2", "question 3", "question 4", "question 5"],
+        "comprehension": ["question 1", "question 2", "question 3", "question 4"],
+        "orale": ["activité 1", "activité 2", "activité 3"],
+        "ecrite": ["sujet 1", "sujet 2"],
+        "vocabulaire": [ {"mot": "...", "definition": "...", "exemple": "..."} ],
+        "grammaire": { "consigne": "...", "phrases_eleve": ["phrase 1 à transformer", "phrase 2"], "corriges": ["réponse 1", "réponse 2"] },
+        "conjugaison": { "consigne": "...", "phrases_trous": ["phrase avec (verbe)", "phrase 2"], "corriges": ["verbe conjugué 1", "verbe 2"] },
+        "qcm": [ {"question": "...", "options": ["A", "B", "C", "D"], "reponse_correcte": "A"} ],
+        "texte_trous": { "texte_eleve": "Texte avec des _____ pour les mots manquants.", "mots_manquants": ["mot1", "mot2", "mot3"] },
+        "dictee": "Texte complet de la dictée (4 phrases)."
+    }`;
+
+    // 3. Appel à l'API et Génération
+    generateBtn.addEventListener('click', async function() {
+        if (API_KEY === "METTEZ_VOTRE_CLE_API_ICI") {
+            alert("Veuillez insérer votre clé API dans le code JavaScript !"); return;
+        }
+
+        generateBtn.disabled = true;
+        loading.style.display = 'block';
+        appResults.style.display = 'none';
+
+        const requestBody = {
+            contents: [{ parts: [ { text: jsonPrompt }, { inline_data: { mime_type: mimeType, data: base64Image } } ] }],
+            // On force Gemini à répondre en JSON
+            generationConfig: { response_mime_type: "application/json" } 
+        };
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+            const jsonText = data.candidates[0].content.parts[0].text;
+            
+            // On convertit le texte de l'IA en véritable objet Javascript
+            const pedagoData = JSON.parse(jsonText); 
+            
+            // 4. Remplissage du document PDF caché
+            remplirPDF(pedagoData);
+
+            loading.style.display = 'none';
+            appResults.style.display = 'block';
+            generateBtn.disabled = false;
+
+        } catch (error) {
+            console.error(error);
+            alert("Erreur lors de la génération. L'IA a peut-être renvoyé un format invalide.");
+            loading.style.display = 'none';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // 5. Fonction pour injecter les données JSON dans le HTML du PDF
+    function remplirPDF(data) {
+        // --- PAGE ÉLÈVE ---
+        document.getElementById('pdf-observation').innerHTML = `
+            <b>Observez l'image et répondez :</b><ul>` + data.observation.map(q => `<li>${q}</li>`).join('') + `</ul>
+            <b>Allons plus loin :</b><ul>` + data.comprehension.map(q => `<li>${q}</li>`).join('') + `</ul>`;
+
+        let vocabHtml = `<tr><th>Mot</th><th>Définition</th><th>Exemple</th></tr>`;
+        data.vocabulaire.slice(0, 10).forEach(v => {
+            vocabHtml += `<tr><td><b>${v.mot}</b></td><td>${v.definition}</td><td><i>${v.exemple}</i></td></tr>`;
+        });
+        document.getElementById('pdf-vocab').innerHTML = vocabHtml;
+
+        document.getElementById('pdf-grammaire').innerHTML = `<p><b>Consigne:</b> ${data.grammaire.consigne}</p><ul>` + data.grammaire.phrases_eleve.map(p => `<li>${p}<br>____________________________________________________</li>`).join('') + `</ul>`;
+        
+        document.getElementById('pdf-conjugaison').innerHTML = `<p><b>Consigne:</b> ${data.conjugaison.consigne}</p><ul>` + data.conjugaison.phrases_trous.map(p => `<li>${p}</li>`).join('') + `</ul>`;
+
+        let qcmHtml = "";
+        data.qcm.forEach((q, index) => {
+            qcmHtml += `<p><b>${index+1}. ${q.question}</b><br>`;
+            q.options.forEach(opt => qcmHtml += `◻️ ${opt} &nbsp;&nbsp;&nbsp;`);
+            qcmHtml += `</p>`;
+        });
+        document.getElementById('pdf-qcm').innerHTML = qcmHtml;
+
+        document.getElementById('pdf-trous').innerHTML = `<p>${data.texte_trous.texte_eleve}</p>`;
+        document.getElementById('pdf-ecrite').innerHTML = `<ul>` + data.ecrite.map(s => `<li>${s}</li>`).join('') + `</ul>`;
+
+        // --- PAGE PROFESSEUR ---
+        document.getElementById('pdf-analyse-ia').innerHTML = `
+            <ul><li><b>Personnes:</b> ${data.analyse.personnes}</li><li><b>Objets:</b> ${data.analyse.objets}</li>
+            <li><b>Lieu:</b> ${data.analyse.lieu}</li><li><b>Ambiance:</b> ${data.analyse.ambiance}</li></ul>`;
+
+        document.getElementById('pdf-corr-grammaire').innerHTML = `
+            <b>Grammaire :</b><ul>` + data.grammaire.corriges.map(c => `<li>${c}</li>`).join('') + `</ul>
+            <b>Conjugaison :</b><ul>` + data.conjugaison.corriges.map(c => `<li>${c}</li>`).join('') + `</ul>`;
+
+        document.getElementById('pdf-corr-qcm-trous').innerHTML = `
+            <b>QCM Réponses :</b><ul>` + data.qcm.map((q, i) => `<li>Q${i+1} : ${q.reponse_correcte}</li>`).join('') + `</ul>
+            <b>Mots manquants (Texte à trous) :</b> ${data.texte_trous.mots_manquants.join(', ')}`;
+
+        document.getElementById('pdf-dictee').innerHTML = `<p>${data.dictee}</p>`;
+        document.getElementById('pdf-orale').innerHTML = `<ul>` + data.orale.map(a => `<li>${a}</li>`).join('') + `</ul>`;
+    }
+
+    // 6. Génération et téléchargement du PDF
+    downloadPdfBtn.addEventListener('click', function() {
+        const element = document.getElementById('pdf-container');
+        // On rend temporairement la zone visible pour la capture
+        element.style.display = 'block'; 
+
+        const opt = {
+            margin:       0,
+            filename:     'Séquence_Pédagogique.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Création du PDF puis on recache la zone
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.display = 'none';
+        });
+    });
+</script>
+
+</body>
+</html>
